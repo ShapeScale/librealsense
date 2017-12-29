@@ -12,7 +12,7 @@ namespace librealsense
 		p.depth_table.depthUnits = 100;
 		p.depth_table.depthClampMax = 10000;
 		p.depth_table.disparityShift = 50;
-		p.depth_exposure.exposure = 8000;
+		p.depth_exposure.exposure = 1000;
 		p.laser_power.laser_power = 360;
 		p.depth_auto_exposure.auto_exposure = 0;
 		//shapescale changes
@@ -153,6 +153,17 @@ namespace librealsense
 
     void low_res_high_accuracy(preset& p)
     {
+
+		/////////////////////
+		//shapescale changes
+		p.depth_table.depthUnits = 100;
+		p.depth_table.depthClampMax = 10000;
+		p.depth_table.disparityShift = 50;
+		p.depth_exposure.exposure = 1000;
+		p.laser_power.laser_power = 360;
+		p.depth_auto_exposure.auto_exposure = 0;
+		//shapescale changes
+		///////////////////
         p.depth_controls.deepSeaMedianThreshold = 871;
         p.depth_controls.deepSeaNeighborThreshold = 113;
         p.depth_controls.deepSeaSecondPeakThreshold = 310;
@@ -294,6 +305,16 @@ namespace librealsense
 
     void mid_res_high_accuracy(preset& p)
     {
+		/////////////////////
+		//shapescale changes
+		p.depth_table.depthUnits = 100;
+		p.depth_table.depthClampMax = 10000;
+		p.depth_table.disparityShift = 50;
+		p.depth_exposure.exposure = 1000;
+		p.laser_power.laser_power = 360;
+		p.depth_auto_exposure.auto_exposure = 0;
+		//shapescale changes
+		///////////////////
         p.depth_controls.deepSeaMedianThreshold = 347;
         p.depth_controls.deepSeaNeighborThreshold = 82;
         p.depth_controls.deepSeaSecondPeakThreshold = 205;
