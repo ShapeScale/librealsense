@@ -7,6 +7,17 @@ namespace librealsense
 {
     void high_res_high_accuracy(preset& p)
     {
+		/////////////////////
+		//shapescale changes
+		p.depth_table.depthUnits = 100;
+		p.depth_table.depthClampMax = 10000;
+		p.depth_table.disparityShift = 50;
+		p.depth_exposure.exposure = 8000;
+		p.laser_power.laser_power = 360;
+		p.depth_auto_exposure.auto_exposure = 0;
+		//shapescale changes
+		///////////////////
+
         p.depth_controls.deepSeaMedianThreshold = 796;
         p.depth_controls.deepSeaNeighborThreshold = 108;
         p.depth_controls.deepSeaSecondPeakThreshold = 647;
