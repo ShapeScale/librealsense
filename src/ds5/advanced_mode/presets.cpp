@@ -10,7 +10,7 @@ namespace librealsense
 		/////////////////////
 		//shapescale changes
 		p.depth_table.depthUnits = 100;
-		p.depth_table.depthClampMax = 10000;
+		p.depth_table.depthClampMax = 15000;
 		p.depth_table.disparityShift = 50;
 		p.depth_exposure.exposure = 1000;
 		p.laser_power.laser_power = 360;
@@ -157,7 +157,7 @@ namespace librealsense
 		/////////////////////
 		//shapescale changes
 		p.depth_table.depthUnits = 100;
-		p.depth_table.depthClampMax = 10000;
+		p.depth_table.depthClampMax = 15000;
 		p.depth_table.disparityShift = 50;
 		p.depth_exposure.exposure = 1000;
 		p.laser_power.laser_power = 360;
@@ -308,7 +308,7 @@ namespace librealsense
 		/////////////////////
 		//shapescale changes
 		p.depth_table.depthUnits = 100;
-		p.depth_table.depthClampMax = 10000;
+		p.depth_table.depthClampMax = 15000;
 		p.depth_table.disparityShift = 50;
 		p.depth_exposure.exposure = 1000;
 		p.laser_power.laser_power = 360;
