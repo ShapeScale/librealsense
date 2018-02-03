@@ -14,7 +14,7 @@
 
 using namespace std;
 using namespace TCLAP;
-using namespace rs2;
+
 
 vector<uint8_t> build_raw_command_data(const command& command, const vector<string>& params)
 {
@@ -37,7 +37,7 @@ vector<uint8_t> build_raw_command_data(const command& command, const vector<stri
     return raw_data;
 }
 
-void xml_mode(const string& line, const commands_xml& cmd_xml, device& dev, map<string, xml_parser_function>& format_type_to_lambda)
+void xml_mode(const string& line, const commands_xml& cmd_xml, rs2::device& dev, map<string, xml_parser_function>& format_type_to_lambda)
 {
     vector<string> tokens;
     stringstream ss(line);
@@ -48,6 +48,7 @@ void xml_mode(const string& line, const commands_xml& cmd_xml, device& dev, map<
         converter << hex << word;
         tokens.push_back(word);
     }
+
     if (tokens.empty())
         throw runtime_error("Wrong input!");
 
@@ -69,7 +70,7 @@ void xml_mode(const string& line, const commands_xml& cmd_xml, device& dev, map<
     }
     cout << endl;
 
-    auto result = dev.as<debug_protocol>().send_and_receive_raw_data(raw_data);
+    auto result = dev.as<rs2::debug_protocol>().send_and_receive_raw_data(raw_data);
 
     unsigned returned_opcode = *result.data();
     // check returned opcode
@@ -92,7 +93,7 @@ void xml_mode(const string& line, const commands_xml& cmd_xml, device& dev, map<
     }
 }
 
-void hex_mode(const string& line, device& dev)
+void hex_mode(const string& line, rs2::device& dev)
 {
     vector<uint8_t> raw_data;
     stringstream ss(line);
@@ -108,7 +109,7 @@ void hex_mode(const string& line, device& dev)
     if (raw_data.empty())
         throw runtime_error("Wrong input!");
 
-    auto result = dev.as<debug_protocol>().send_and_receive_raw_data(raw_data);
+    auto result = dev.as<rs2::debug_protocol>().send_and_receive_raw_data(raw_data);
 
     cout << endl;
     for (auto& elem : result)
@@ -141,11 +142,16 @@ void read_script_file(const string& full_file_path, vector<string>& hex_lines)
     throw runtime_error("Script file not found!");
 }
 
-device wait_for_device(const device_hub& hub)
+rs2::device wait_for_device(const rs2::device_hub& hub, bool print_info = true)
 {
-    cout << "\nWaiting for RealSense device to connect...\n";
+    if (print_info)
+        cout << "\nWaiting for RealSense device to connect...\n";
+
     auto dev = hub.wait_for_device();
-    cout << "RealSense device has connected...\n";
+
+    if (print_info)
+        cout << "RealSense device has connected...\n";
+
     return dev;
 }
 
@@ -165,10 +171,10 @@ int main(int argc, char** argv)
     cmd.parse(argc, argv);
 
     // parse command.xml
-    log_to_file(RS2_LOG_SEVERITY_WARN, "librealsense.log");
+    rs2::log_to_file(RS2_LOG_SEVERITY_WARN, "librealsense.log");
     // Obtain a list of devices currently present on the system
-    context ctx;
-    device_hub hub(ctx);
+    rs2::context ctx;
+    rs2::device_hub hub(ctx);
 
     auto xml_full_file_path = xml_arg.getValue();
     map<string, xml_parser_function> format_type_to_lambda;
@@ -195,9 +201,32 @@ int main(int argc, char** argv)
     }
     auto auto_comp = get_auto_complete_obj(is_application_in_hex_mode, cmd_xml.commands);
 
+    rs2::device dev;
     while (true)
     {
-        auto dev = wait_for_device(hub);
+        if (device_id_arg.isSet())
+        {
+            auto dev_id = device_id_arg.getValue();
+            auto num_of_devices = ctx.query_devices().size();
+            if (num_of_devices < (dev_id + 1))
+            {
+                std::cout << "\nGiven device_id doesn't exist! device_id=" <<
+                             dev_id << " ; connected devices=" << num_of_devices << std::endl;
+                return EXIT_FAILURE;
+            }
+
+            for (int i = 0; i < (num_of_devices - 1); ++i)
+            {
+                wait_for_device(hub, false);
+            }
+            dev = wait_for_device(hub, false);
+            std::cout << "\nDevice ID " << dev_id << " has loaded.\n";
+        }
+        else
+        {
+            dev = wait_for_device(hub);
+        }
+
         fflush(nullptr);
 
         if (hex_cmd_arg.isSet())
@@ -264,8 +293,6 @@ int main(int argc, char** argv)
         }
 
 
-
-
         while (hub.is_connected(dev))
         {
             try
@@ -300,7 +327,7 @@ int main(int argc, char** argv)
 
                 cout << endl;
             }
-            catch (const error & e)
+            catch (const rs2::error & e)
             {
                 cerr << "RealSense error calling " << e.get_failed_function() << "(" << e.get_failed_args() << "):\n    " << e.what() << endl;
             }

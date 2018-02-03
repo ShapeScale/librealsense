@@ -43,8 +43,6 @@
 
 #include <sys/signalfd.h>
 #include <signal.h>
-
-
 #pragma GCC diagnostic ignored "-Woverflow"
 
 const size_t MAX_DEV_PARENT_DIR = 10;
@@ -199,13 +197,13 @@ namespace librealsense
                                                     PROT_READ | PROT_WRITE, MAP_SHARED,
                                                     fd, buf.m.offset));
                 if(_start == MAP_FAILED)
-                    linux_backend_exception("mmap failed");
+                    throw linux_backend_exception("mmap failed");
             }
             else
             {
                 _length += MAX_META_DATA_SIZE;
                 _start = static_cast<uint8_t*>(malloc( buf.length + MAX_META_DATA_SIZE));
-                if (!_start) linux_backend_exception("User_p allocation failed!");
+                if (!_start) throw linux_backend_exception("User_p allocation failed!");
                 memset(_start, 0, _length);
             }
         }
@@ -712,6 +710,7 @@ namespace librealsense
             }
         }
 
+
         void v4l_uvc_device::poll()
         {
             fd_set fds{};
@@ -781,7 +780,7 @@ namespace librealsense
 
                             _error_handler(n);
                         }
-                        else
+                        else if (buf.bytesused > 0)
                         {
                             void* md_start = nullptr;
                             uint8_t md_size = 0;
@@ -791,23 +790,23 @@ namespace librealsense
                                 md_size = (*(uint8_t*)md_start);
                             }
 
-                            frame_object fo{ buffer->get_length_frame_only(), md_size,
-                                buffer->get_frame_start(), md_start };
+                            auto timestamp = (double)buf.timestamp.tv_sec*1000.f + (double)buf.timestamp.tv_usec/1000.f;
+                            timestamp = monotonic_to_realtime(timestamp);
 
-                             if (buf.bytesused > 0)
-                             {
-                                 buffer->attach_buffer(buf);
-                                 moved_qbuff = true;
-                                 auto fd = _fd;
-                                 _callback(_profile, fo,
-                                           [fd, buffer]() mutable {
-                                     buffer->request_next_frame(fd);
-                                 });
-                             }
-                             else
-                             {
-                                 LOG_WARNING("Empty frame has arrived.");
-                             }
+                            frame_object fo{ buffer->get_length_frame_only(), md_size,
+                                buffer->get_frame_start(), md_start, timestamp };
+
+                             buffer->attach_buffer(buf);
+                             moved_qbuff = true;
+                             auto fd = _fd;
+                             _callback(_profile, fo,
+                                       [fd, buffer]() mutable {
+                                 buffer->request_next_frame(fd);
+                             });
+                        }
+                        else
+                        {
+                            LOG_WARNING("Empty frame has arrived.");
                         }
                     }
 
@@ -1194,8 +1193,7 @@ namespace librealsense
 
         bool v4l_uvc_device::has_metadata()
         {
-           if(!_use_memory_map)
-               return true;
+            return !_use_memory_map;
         }
 
         std::shared_ptr<uvc_device> v4l_backend::create_uvc_device(uvc_device_info info) const

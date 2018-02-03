@@ -146,7 +146,7 @@ describe('Context test', function() {
 
   it('testing method - setDevicesChangedCallback', () => {
     const context = new librealsense2.Context();
-    assert.doesNotThrow(() => {
+    assert.throws(() => {
       context.setDevicesChangedCallback();
     });
   });
@@ -159,5 +159,12 @@ describe('Context test', function() {
       pbd = context.loadDevice('record.bag');
     });
     assert(pbd instanceof librealsense2.Device);
+  });
+
+  it('testing method - getSensorParent', () => {
+    const context = new librealsense2.Context();
+    const devices = context.queryDevices().devices;
+    const sensors = devices[0].querySensors();
+    context.getSensorParent(sensors[0]);
   });
 });

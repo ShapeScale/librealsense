@@ -26,30 +26,12 @@ describe('Sensor test', function() {
     rs2.cleanup();
   });
 
-  const optionsTestArray = [
-      rs2.option.option_enable_auto_exposure,
-      'enable_auto_exposure',
-      rs2.option.OPTION_ENABLE_AUTO_WHITE_BALANCE,
-    ];
-
+  const optionsTestArray = Object.values(rs2.option);
+  optionsTestArray.pop();
+  optionsTestArray.pop();
   it('Testing member - isValid', () => {
     sensors.forEach((sensor) => {
       assert.equal(typeof sensor.isValid, 'boolean');
-    });
-  });
-  it('Testing method getMotionIntrinsics', () => {
-    sensors.forEach((sensor) => {
-      Object.keys(rs2.stream).forEach((o) => {
-        if (o === 'STREAM_COUNT' || o === 'streamToString') return;
-        const m = sensor.getMotionIntrinsics(rs2.stream[o]);
-        assert.equal(typeof m, 'object');
-        assert.equal(Object.prototype.toString.call(m.data), '[object Array]');
-        assert.equal(m.data.length, 12);
-        assert.equal(Object.prototype.toString.call(m.noiseVariances), '[object Array]');
-        assert.equal(m.noiseVariances.length, 3);
-        assert.equal(Object.prototype.toString.call(m.biasVariances), '[object Array]');
-        assert.equal(m.biasVariances.length, 3);
-      });
     });
   });
 
@@ -212,7 +194,7 @@ describe('Sensor test', function() {
         }
       });
     });
-  }).timeout(20 * 1000);
+  }).timeout(30 * 1000);
 
   it('Testing method getOptionDescription', () => {
     sensors.forEach((sensor) => {
@@ -227,9 +209,15 @@ describe('Sensor test', function() {
   it('Testing method getOptionValueDescription', () => {
     sensors.forEach((sensor) => {
       optionsTestArray.forEach((o) => {
-        assert(typeof sensor.getOptionValueDescription(o) === 'string' ||
-          typeof sensor.getOptionValueDescription(o) === 'undefined'
-        );
+      let value;
+      if (sensor.supportsOption(o)) {
+        value = sensor.getOption(o);
+      } else {
+        value = 0;
+      }
+      assert(typeof sensor.getOptionValueDescription(o, value) === 'undefined' ||
+        typeof sensor.getOptionValueDescription(o, value) === 'string'
+      );
       });
     });
   });
@@ -295,6 +283,22 @@ describe('Sensor test', function() {
         });
         sensor.stop();
       }
+    });
+  });
+
+  it('Testing method close', () => {
+    sensors.forEach((sensor) => {
+      assert.doesNotThrow(() => {
+        sensor.close();
+      });
+    });
+  });
+
+  it('Testing method setNotificationsCallback', () => {
+    sensors.forEach((sensor) => {
+      assert.throws(() => {
+        sensor.setNotificationsCallback();
+      });
     });
   });
 });

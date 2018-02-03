@@ -170,6 +170,8 @@ namespace librealsense
             uint8_t         metadata_size;
             const void *    pixels;
             const void *    metadata;
+            rs2_time_t      backend_time;
+
         };
 
         typedef std::function<void(stream_profile, frame_object, std::function<void()>)> frame_callback;
@@ -290,6 +292,24 @@ namespace librealsense
             const playback_device_info& b)
         {
             return (a.file_path == b.file_path);
+        }
+
+        struct tm2_device_info
+        {
+            void* device_ptr;
+
+            operator std::string()
+            {
+                std::ostringstream oss;
+                oss << device_ptr;
+                return oss.str();
+            }
+        };
+
+        inline bool operator==(const tm2_device_info& a,
+            const tm2_device_info& b)
+        {
+            return (a.device_ptr == b.device_ptr);
         }
 
         struct hid_sensor
@@ -549,12 +569,14 @@ namespace librealsense
             std::vector<usb_device_info> usb_devices;
             std::vector<hid_device_info> hid_devices;
             std::vector<playback_device_info> playback_devices;
+            std::vector<tm2_device_info> tm2_devices;
 
             bool operator == (const backend_device_group& other)
             {
                 return !list_changed(uvc_devices, other.uvc_devices) &&
                     !list_changed(hid_devices, other.hid_devices) &&
-                    !list_changed(playback_devices, other.playback_devices);
+                    !list_changed(playback_devices, other.playback_devices) && 
+                    !list_changed(tm2_devices, other.tm2_devices);
             }
 
             operator std::string()
@@ -830,6 +852,8 @@ namespace librealsense
             virtual ~device_watcher() {};
         };
     }
+
+    double monotonic_to_realtime(double monotonic);
 }
 
 #endif
